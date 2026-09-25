@@ -1,0 +1,1 @@
+.structure-edit{display:flex;align-items:center;gap:6px}.structure-edit .input{max-width:240px}@media(max-width:640px){.structure-edit{align-items:stretch;flex-direction:column}.structure-edit .input{max-width:none}}

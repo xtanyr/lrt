@@ -1,0 +1,16 @@
+{
+  "name": "skuratov-rating",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run start:dev --workspace=backend\" \"npm run dev --workspace=frontend\"",
+    "backend": "npm run start:dev --workspace=backend",
+    "frontend": "npm run dev --workspace=frontend"
+  },
+  "workspaces": [
+    "backend",
+    "frontend"
+  ],
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  }
+}

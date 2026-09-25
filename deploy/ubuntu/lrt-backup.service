@@ -1,0 +1,9 @@
+[Unit]
+Description=Create and verify an LRT PostgreSQL backup
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /opt/lrt/current/deploy/ubuntu/backup.sh
+ExecStartPost=/bin/bash /opt/lrt/current/deploy/ubuntu/restore-check.sh

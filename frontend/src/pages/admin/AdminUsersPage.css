@@ -1,0 +1,15 @@
+.user-assignment-selects {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+
+@media (max-width: 640px) {
+  .user-assignment-selects {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,15 @@
+.git
+.codex
+.agents
+.windsurf
+.superpowers
+.local
+node_modules
+dist
+coverage
+graphify-out
+*.env
+*.xlsx
+*.xls
+*.dump
+*.log

@@ -1,0 +1,420 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model City {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique @db.VarChar(255)
+  coffeeShops CoffeeShop[]
+  cityAssignments UserCityAssignment[]
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("cities")
+}
+
+model CoffeeShopCategory {
+  id          Int           @id @default(autoincrement())
+  name        String        @unique @db.VarChar(255)
+  coffeeShops CoffeeShop[]
+  overrides   MetricThresholdOverride[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@map("coffee_shop_categories")
+}
+
+model CoffeeShop {
+  id           Int           @id @default(autoincrement())
+  name         String        @db.VarChar(255)
+  cityId       Int
+  city         City          @relation(fields: [cityId], references: [id], onDelete: Restrict)
+  isActive     Boolean       @default(true)
+  categoryId   Int?
+  category     CoffeeShopCategory? @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+  assignments  UserCoffeeShopAssignment[]
+  comments     Comment[]
+  reports      MonthlyReport[]
+  links        ReportLink[]
+  ipvStatuses  IPVStatus[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@map("coffee_shops")
+}
+
+model User {
+  id                Int                     @id @default(autoincrement())
+  name              String                  @db.VarChar(255)
+  email             String                  @unique @db.VarChar(255)
+  passwordHash      String?                 @db.VarChar(255)
+  googleOauthId     String?                 @unique @db.VarChar(255)
+  role              UserRole                @default(LEADER)
+  approvedAt        DateTime?
+  coffeeShopAssignments UserCoffeeShopAssignment[]
+  cityAssignments   UserCityAssignment[]
+  authoredComments  Comment[]               @relation("CommentAuthor")
+  editedReports     ReportEditLog[]         @relation("ReportEditor")
+  submittedReports  MonthlyReport[]         @relation("ReportSubmitter")
+  configChanges     ConfigChangeLog[]
+  exemptions        TriggerExemption[]
+  notifications     Notification[]
+  passwordResets    PasswordResetToken[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@map("users")
+}
+
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  userId    Int
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String    @unique @db.VarChar(255)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@map("password_reset_tokens")
+}
+
+model UserCoffeeShopAssignment {
+  id           Int         @id @default(autoincrement())
+  userId       Int
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  coffeeShopId Int
+  coffeeShop   CoffeeShop  @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  assignedFrom DateTime    @default(now())
+  assignedUntil DateTime?
+
+  @@unique([userId, coffeeShopId, assignedFrom])
+  @@index([coffeeShopId, assignedFrom, assignedUntil])
+  @@map("user_coffee_shop_assignments")
+}
+
+model UserCityAssignment {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cityId    Int
+  city      City     @relation(fields: [cityId], references: [id], onDelete: Cascade)
+  assignedFrom DateTime @default(now())
+
+  @@unique([userId, cityId])
+  @@map("user_city_assignments")
+}
+
+model Metric {
+  id                Int                     @id @default(autoincrement())
+  name              String                  @db.VarChar(255)
+  code              String                  @unique @db.VarChar(50)
+  unit              String                  @db.VarChar(50)
+  direction         MetricDirection         @default(HIGHER_IS_BETTER)
+  thresholdStrong   Decimal                 @db.Decimal(5, 2)
+  thresholdMedium   Decimal                 @db.Decimal(5, 2)
+  pointsStrong      Decimal                 @db.Decimal(5, 2)
+  pointsMedium      Decimal                 @db.Decimal(5, 2)
+  pointsCritical    Decimal                 @db.Decimal(5, 2) @default(0)
+  isActive          Boolean                 @default(true)
+  displayOrder      Int                     @default(0)
+  valueScale        Decimal                 @default(100) @db.Decimal(5, 2)
+  section           AnalysisSection?
+  source            String?
+  ptTarget          Decimal?                @db.Decimal(5, 2)
+  ptMid             Decimal?                @db.Decimal(5, 2)
+  targetValue       Decimal?                @db.Decimal(5, 2)
+  midValue          Decimal?                @db.Decimal(5, 2)
+  metricValues      MetricValue[]
+  overrides         MetricThresholdOverride[]
+  createdAt         DateTime                @default(now())
+  updatedAt         DateTime                @updatedAt
+
+  @@map("metrics")
+  @@unique([name])
+}
+
+model MetricThresholdOverride {
+  id              Int            @id @default(autoincrement())
+  metricId        Int
+  metric          Metric         @relation(fields: [metricId], references: [id], onDelete: Cascade)
+  categoryId      Int
+  category        CoffeeShopCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  thresholdStrong Decimal        @db.Decimal(5, 2)
+  thresholdMedium Decimal        @db.Decimal(5, 2)
+  pointsStrong    Decimal        @db.Decimal(5, 2)
+  pointsMedium    Decimal        @db.Decimal(5, 2)
+  pointsCritical  Decimal        @db.Decimal(5, 2) @default(0)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([metricId, categoryId])
+  @@map("metric_threshold_overrides")
+}
+
+model RatingColorConfig {
+  id          Int       @id @default(autoincrement())
+  greenThreshold Decimal @db.Decimal(5, 2) @default(80)
+  redThreshold   Decimal @db.Decimal(5, 2) @default(60)
+  updatedById    Int?
+  updatedAt      DateTime @default(now()) @updatedAt
+
+  @@map("rating_color_configs")
+}
+
+model MonthlyReport {
+  id           Int            @id @default(autoincrement())
+  coffeeShopId Int
+  coffeeShop   CoffeeShop     @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  year         Int
+  month        Int
+  revenue      Decimal        @db.Decimal(12, 2)
+  drinksCount  Int?
+  status       ReportStatus   @default(NOT_FILLED)
+  isLocked     Boolean        @default(false)
+  submittedAt  DateTime?
+  submittedById Int?
+  submittedBy   User?           @relation("ReportSubmitter", fields: [submittedById], references: [id], onDelete: SetNull)
+  formData     Json?
+  ratingSnapshot Json?
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  metricValues MetricValue[]
+  analyses     ReportAnalysis[]
+  editLogs     ReportEditLog[]
+
+  @@unique([coffeeShopId, year, month])
+  @@index([submittedById])
+  @@map("monthly_reports")
+}
+
+model MetricValue {
+  id              Int            @id @default(autoincrement())
+  reportId        Int
+  report          MonthlyReport  @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  metricId        Int
+  metric          Metric         @relation(fields: [metricId], references: [id], onDelete: Restrict)
+  absoluteValue   Decimal?       @db.Decimal(12, 2)
+  computedPercent Decimal?      @db.Decimal(5, 2)
+  zone            MetricZone?
+  pointsAwarded   Decimal?       @db.Decimal(5, 2)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([reportId, metricId])
+  @@map("metric_values")
+}
+
+model ReportAnalysis {
+  id          Int      @id @default(autoincrement())
+  reportId    Int
+  report      MonthlyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  questionKey String   @db.VarChar(255)
+  content     String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([reportId, questionKey])
+  @@map("report_analyses")
+}
+
+model AnalysisQuestion {
+  id          Int                @id @default(autoincrement())
+  section     AnalysisSection
+  questionKey String             @unique @db.VarChar(255)
+  label       String             @db.VarChar(500)
+  displayOrder Int               @default(0)
+  isActive    Boolean            @default(true)
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@map("analysis_questions")
+}
+
+model ReportLink {
+  id          Int            @id @default(autoincrement())
+  coffeeShopId Int
+  coffeeShop  CoffeeShop     @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  linkType    ReportLinkType
+  url         String         @db.VarChar(1000)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@map("report_links")
+}
+
+model ReportEditLog {
+  id           Int       @id @default(autoincrement())
+  reportId     Int
+  report       MonthlyReport @relation(fields: [reportId], references: [id], onDelete: Cascade)
+  editedById   Int
+  editedBy     User      @relation("ReportEditor", fields: [editedById], references: [id], onDelete: Restrict)
+  editedAt     DateTime  @default(now())
+  fieldChanged String    @db.VarChar(255)
+  oldValue     String?
+  newValue     String?
+
+  @@map("report_edit_logs")
+}
+
+model ConfigChangeLog {
+  id           Int       @id @default(autoincrement())
+  changedById  Int
+  changedBy    User      @relation(fields: [changedById], references: [id], onDelete: Restrict)
+  changedAt    DateTime  @default(now())
+  fieldChanged String    @db.VarChar(255)
+  oldValue     String?
+  newValue     String?
+
+  @@map("config_change_logs")
+}
+
+model TriggerConfig {
+  id              Int            @id @default(autoincrement())
+  code            TriggerCode    @unique
+  thresholdRating Decimal        @db.Decimal(5, 2)
+  monthsCount     Int
+  minMonthsOnPosition Int @default(6)
+  minMonthsSinceApproval Int @default(6)
+  isActive        Boolean        @default(true)
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@map("trigger_configs")
+}
+
+model IPVStatus {
+  id              Int            @id @default(autoincrement())
+  coffeeShopId    Int
+  coffeeShop      CoffeeShop     @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  triggerCode     TriggerCode
+  metricId        Int?
+  triggeredAt     DateTime       @default(now())
+  status          IPVStatusType  @default(NOT_STARTED)
+  statusChangedBy Int?
+  statusChangedAt DateTime?
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+
+  @@unique([coffeeShopId, triggerCode])
+  @@map("ipv_statuses")
+}
+
+model TriggerExemption {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  reason      String    @db.VarChar(1000)
+  isActive    Boolean   @default(true)
+  setById     Int
+  setAt       DateTime  @default(now())
+  clearedById Int?
+  clearedAt   DateTime?
+
+  @@map("trigger_exemptions")
+}
+
+model Comment {
+  id        Int       @id @default(autoincrement())
+  coffeeShopId Int
+  coffeeShop CoffeeShop @relation(fields: [coffeeShopId], references: [id], onDelete: Cascade)
+  reportId  Int?
+  authorId  Int
+  author    User      @relation("CommentAuthor", fields: [authorId], references: [id], onDelete: Restrict)
+  text      String    @db.Text
+  createdAt DateTime @default(now())
+
+  @@map("comments")
+}
+
+model Notification {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title       String    @db.VarChar(255)
+  message     String    @db.Text
+  ipvStatusId Int?
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@map("notifications")
+}
+
+model SystemSetting {
+  key       String   @id @db.VarChar(100)
+  value     String   @db.Text
+  updatedAt DateTime @updatedAt
+
+  @@map("system_settings")
+}
+
+enum UserRole {
+  LEADER
+  CITY_LEADER
+  COO
+  ADMIN
+}
+
+enum MetricDirection {
+  HIGHER_IS_BETTER
+  LOWER_IS_BETTER
+}
+
+enum ReportStatus {
+  NOT_FILLED
+  OVERDUE
+  SUBMITTED
+}
+
+enum MetricZone {
+  TARGET
+  BELOW_TARGET
+  CRITICAL
+}
+
+enum ReportLinkType {
+  GIFT_REASONS
+  EQUIPMENT_PLAN
+}
+
+enum AnalysisSection {
+  ENPS
+  REVIEWS
+  GUEST_EXPERIENCE
+  STANDARDS
+  GIFTS
+  LABOR_COST
+  PERSONNEL_COSTS
+  FREE_ACCESS
+  DESSERT_WRITEOFF
+  PRODUCT_WRITEOFF
+  ADMIN_COSTS
+  RENT
+  EQUIPMENT
+  TEAM_GUESTS
+  COSTING
+  EXPENSES
+  SUMMARY
+}
+
+enum TriggerCode {
+  T1
+  T2
+  T3
+}
+
+enum IPVStatusType {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}

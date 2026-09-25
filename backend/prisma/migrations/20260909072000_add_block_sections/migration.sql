@@ -1,0 +1,3 @@
+ALTER TYPE "AnalysisSection" ADD VALUE 'TEAM_GUESTS';
+ALTER TYPE "AnalysisSection" ADD VALUE 'COSTING';
+ALTER TYPE "AnalysisSection" ADD VALUE 'EXPENSES';

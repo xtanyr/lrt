@@ -1,0 +1,21 @@
+.import-page { max-width: 1040px; }
+.import-note { margin: 0 0 16px; padding: 10px 12px; border-left: 3px solid var(--accent); background: var(--accent-tint); color: #65301d; font-size: 13px; }
+.import-start-card { display: grid; grid-template-columns: minmax(220px, 1fr) minmax(260px, 1.2fr) auto; align-items: end; gap: 14px; }
+.import-file-input { padding: 5px 8px; }
+.import-preview-button { white-space: nowrap; }
+.import-status, .import-warning { margin: 0 0 12px; padding: 9px 11px; border-radius: 8px; background: var(--warning-tint); color: var(--warning); font-size: 12px; }
+.import-preview-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 12px; }
+.import-preview-heading .card-title { margin: 0 0 2px; }
+.import-preview-heading p { color: var(--ink-2); font-size: 12px; }
+.import-period { padding: 0; overflow: hidden; }
+.import-period summary { padding: 13px 16px; cursor: pointer; background: var(--surface); }
+.import-period summary:hover { background: var(--surface-2); }
+.import-period summary label { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+.import-period summary span { display: grid; gap: 2px; }
+.import-period summary small { color: var(--ink-2); font-size: 12px; }
+.import-period > .import-period-facts, .import-period > .import-warning, .import-period > .table-wrap { margin-left: 16px; margin-right: 16px; }
+.import-period-facts { display: grid; grid-template-columns: minmax(220px, 300px) 1fr; gap: 16px; align-items: end; padding: 16px 0; }
+.import-period-facts > div { display: grid; gap: 4px; min-height: 38px; padding: 7px 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface-2); font-size: 12px; }
+.import-period-facts span { color: var(--ink-2); }
+.import-confirm { display: flex; justify-content: flex-end; margin: 16px 0; }
+@media (max-width: 720px) { .import-start-card { grid-template-columns: 1fr; } .import-preview-button { width: 100%; } .import-preview-heading { align-items: flex-start; flex-direction: column; } .import-period-facts { grid-template-columns: 1fr; } .import-confirm .btn { width: 100%; } }
